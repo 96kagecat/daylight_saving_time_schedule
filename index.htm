@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>サマータイム切り替わりタイムスケジュール</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f4f7f6;
+      color: #333;
+      padding: 40px 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 25px;
+      text-align: center;
+      color: #2c3e50;
+    }
+    .year-selector {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    select {
+      padding: 8px 16px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .card {
+      background: #f8f9fa;
+      border-left: 5px solid #3498db;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 0 8px 8px 0;
+    }
+    .card.spring {
+      border-left-color: #e67e22;
+    }
+    .card.color-back {
+      border-left-color: #2980b9;
+    }
+    .card-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: white;
+    }
+    .badge.start { background-color: #e67e22; }
+    .badge.end { background-color: #2980b9; }
+
+    .time-fullwidth {
+      width: 100%;
+    }
+    .time-item {
+      background: #fff;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+    }
+    .time-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #c0392b;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    /* 前後24時間スケジュールのスタイル */
+    .schedule-toggle-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+    .schedule-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #fff;
+    }
+    .schedule-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+    .schedule-row .schedule-label {
+      margin-left: 4px;
+    }
+    .schedule-row:last-child {
+      border-bottom: none;
+    }
+    /* 切り替わり時刻のハイライト */
+    .schedule-row.target-time {
+      background-color: #fff3cd;
+      font-weight: bold;
+    }
+    .schedule-time {
+      color: #2c3e50;
+      font-family: monospace;
+    }
+    .schedule-label {
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .label-time-update {
+      background-color: #e74c3c;
+      color: #fff;
+    }
+    .label-daily {
+      background-color: #e79924;
+      color: #fff;
+    }
+    .label-event {
+      background-color: #12ca5e;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>サマータイム切り替わりタイムスケジュール</h1>
+
+  <div class="year-selector">
+    <label for="year-select">表示対象年: </label>
+    <select id="year-select"></select>
+  </div>
+
+  <div id="results-container"></div>
+</div>
+
+<script>
+  const targetTimeZone = 'America/Los_Angeles'; // カリフォルニア州
+  const yearSelect = document.getElementById('year-select');
+  const resultsContainer = document.getElementById('results-container');
+
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear; y <= currentYear + 2; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = `${y} 年`;
+    if (y === currentYear) opt.selected = true;
+    yearSelect.appendChild(opt);
+  }
+
+  function render() {
+    const selectedYear = parseInt(yearSelect.value, 10);
+    const transitions = findDSTTransitions(selectedYear, targetTimeZone);
+
+    resultsContainer.innerHTML = '';
+
+    transitions.forEach(t => {
+      const isStart = t.type === 'start';
+      const card = document.createElement('div');
+      card.className = `card ${isStart ? 'spring' : 'color-back'}`;
+
+      // 前後24時間のスケジュールHTMLを生成
+      const scheduleHtml = generate24hSchedule(t.rawDate, targetTimeZone);
+
+      card.innerHTML = `
+        <div class="card-title">
+          <span class="badge ${t.type}">${isStart ? 'サマータイム開始' : 'サマータイム終了'}</span>
+          <span>${isStart ? 'サマータイムへ切り替わり' : '標準時へ切り替わり'}</span>
+        </div>
+        <div class="time-fullwidth">
+          <div class="time-item">
+            <div class="time-value">切り替わり時間&nbsp;${t.jpTimeStr}</div>
+
+            <div class="schedule-toggle-title">タイムスケジュール (日本時間)</div>
+            <div class="schedule-list">
+              ${scheduleHtml}
+            </div>
+          </div>
+        </div>
+      `;
+      resultsContainer.appendChild(card);
+    });
+  }
+
+  // 切り替わり時間の前後24時間スケジュールを作る関数
+  function generate24hSchedule(targetDate, timeZone) {
+    let html = '';
+    const jpFormatter = new Intl.DateTimeFormat('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      month: '2-digit', day: '2-digit', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+    });
+
+    // -5時間から+24時間まで1時間ずつループ
+    for (let i = -5; i <= 24; i++) {
+      const loopDate = new Date(targetDate.getTime() + (i * 60 * 60 * 1000));
+      const jpTimeStr = jpFormatter.format(loopDate);
+      const hour = loopDate.getHours();
+
+      // ループ時点での該当タイムゾーンがサマータイム中かどうかを判定
+      const isDstActive = checkIsDSTActive(loopDate, timeZone);
+
+      // 条件適用（優先度1: 切り替わり時間、優先度2: デイリー更新、優先度3: ウニパンカメ）
+      let labelMap = new Map([]);
+
+      if (i === 0) {
+        labelMap.set('切り替わり時間','label-time-update');
+      }
+      if (isDstActive && hour === 16) {
+        labelMap.set('デイリー更新','label-daily');
+      } else if (!isDstActive && hour === 17) {
+        labelMap.set('デイリー更新','label-daily');
+      }
+      if (isDstActive && hour % 2 === 0) {
+        labelMap.set('ウニパンカメ','label-event');
+      } else if (!isDstActive && hour % 2 !== 0) {
+        labelMap.set('ウニパンカメ','label-event');
+      }
+
+      let displayLabel = '';
+      for (const [labelText, labelClass] of labelMap) {
+        displayLabel += `<span class="schedule-label ${labelClass}">${labelText}</span>`;
+      }
+      const isTarget = (i === 0) ? 'target-time' : '';
+
+      html += `
+        <div class="schedule-row ${isTarget}">
+          <span class="schedule-time">${jpTimeStr}</span>
+          <div class="schedule-labels-wrap">
+            ${displayLabel}
+          </div>
+        </div>
+      `;
+    }
+    return html;
+  }
+
+  // 特定の日時がサマータイム(DST)期間中かを調べる
+  function checkIsDSTActive(date, timeZone) {
+    const jan = new Date(date.getFullYear(), 0, 1);
+    const janOffset = getOffsetAt(jan, timeZone);
+    const currentOffset = getOffsetAt(date, timeZone);
+    return currentOffset > janOffset;
+  }
+
+  function findDSTTransitions(year, timeZone) {
+    const transitions = [];
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Date.UTC(year + 1, 0, 1));
+
+    let currentT = start.getTime();
+    const endT = end.getTime();
+    const step = 60 * 60 * 1000;
+
+    let prevOffset = getOffsetAt(new Date(currentT), timeZone);
+
+    while (currentT <= endT) {
+      currentT += step;
+      const nextDate = new Date(currentT);
+      const nextOffset = getOffsetAt(nextDate, timeZone);
+
+      if (nextOffset !== prevOffset) {
+        // 【修正点】nextOffset が prevOffset より大きくなればサマータイム「開始(start)」
+        const type = (nextOffset > prevOffset) ? 'start' : 'end';
+
+        const jpFormatter = new Intl.DateTimeFormat('ja-JP', {
+          timeZone: 'Asia/Tokyo',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+        });
+
+        const jpTimeStr = jpFormatter.format(nextDate);
+
+        transitions.push({
+          type: type,
+          jpTimeStr: jpTimeStr,
+          rawDate: nextDate
+        });
+
+        prevOffset = nextOffset;
+      }
+    }
+    return transitions;
+  }
+
+  function getOffsetAt(date, timeZone) {
+    const tzString = date.toLocaleString('en-US', { timeZone: timeZone, timeZoneName: 'longOffset' });
+    const match = tzString.match(/GMT([+-])(\d+):(\d+)/);
+    if (!match) return 0;
+    const sign = match[1] === '+' ? 1 : -1;
+    const hours = parseInt(match[2], 10);
+    const minutes = parseInt(match[3], 10);
+    return sign * (hours * 60 + minutes);
+  }
+
+  yearSelect.addEventListener('change', render);
+  window.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+
+</html>
