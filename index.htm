@@ -2,23 +2,38 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>サマータイム切り替わりタイムスケジュール</title>
   <style>
     body {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      background-color: #f4f7f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0f7ff;
       color: #333;
-      padding: 40px 20px;
+      padding: 0;
       margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    header {
+        background-color: #fff;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-bottom: 1px solid #ddd;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        z-index: 1000;
+        flex-shrink: 0;
     }
     .container {
-      max-width: 650px;
-      margin: 0 auto;
-      background: #fff;
+      flex: 1;
+      overflow-y: auto;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      margin: 0 5%;
     }
     h1 {
       font-size: 22px;
@@ -37,11 +52,12 @@
       border: 1px solid #ccc;
     }
     .card {
-      background: #f8f9fa;
+      background: #fafafa;
       border-left: 5px solid #3498db;
       padding: 20px;
       margin-bottom: 30px;
       border-radius: 0 8px 8px 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
     .card.spring {
       border-left-color: #e67e22;
@@ -142,13 +158,28 @@
       background-color: #12ca5e;
       color: #fff;
     }
+    footer {
+        background-color: #fff;
+        border-top: 1px solid #ddd;
+        text-align: center;
+        padding: 12px 0;
+        font-size: 13px;
+        color: #666;
+        position: relative;
+        z-index: 1000;
+        flex-shrink: 0;
+    }
+    footer p {
+        margin: 0;
+    }
   </style>
 </head>
 <body>
+<header>
+  サマータイム切り替わりタイムスケジュール
+</header>
 
 <div class="container">
-  <h1>サマータイム切り替わりタイムスケジュール</h1>
-
   <div class="year-selector">
     <label for="year-select">表示対象年: </label>
     <select id="year-select"></select>
@@ -156,6 +187,9 @@
 
   <div id="results-container"></div>
 </div>
+<footer>
+  <p>&copy; <span id="current-year"></span> カゲネコ @96kagecat</p>
+</footer>
 
 <script>
   const targetTimeZone = 'America/Los_Angeles'; // カリフォルニア州
@@ -182,7 +216,7 @@
       const card = document.createElement('div');
       card.className = `card ${isStart ? 'spring' : 'color-back'}`;
 
-      // 前後24時間のスケジュールHTMLを生成
+      // スケジュールHTMLを生成
       const scheduleHtml = generate24hSchedule(t.rawDate, targetTimeZone);
 
       card.innerHTML = `
@@ -194,7 +228,7 @@
           <div class="time-item">
             <div class="time-value">切り替わり時間&nbsp;${t.jpTimeStr}</div>
 
-            <div class="schedule-toggle-title">タイムスケジュール (日本時間)</div>
+            <div class="schedule-toggle-title">タイムスケジュール</div>
             <div class="schedule-list">
               ${scheduleHtml}
             </div>
@@ -205,7 +239,7 @@
     });
   }
 
-  // 切り替わり時間の前後24時間スケジュールを作る関数
+  //スケジュール作成
   function generate24hSchedule(targetDate, timeZone) {
     let html = '';
     const jpFormatter = new Intl.DateTimeFormat('ja-JP', {
@@ -222,7 +256,7 @@
       // ループ時点での該当タイムゾーンがサマータイム中かどうかを判定
       const isDstActive = checkIsDSTActive(loopDate, timeZone);
 
-      // 条件適用（優先度1: 切り替わり時間、優先度2: デイリー更新、優先度3: ウニパンカメ）
+      // 条件適用
       let labelMap = new Map([]);
 
       if (i === 0) {
@@ -282,7 +316,7 @@
       const nextOffset = getOffsetAt(nextDate, timeZone);
 
       if (nextOffset !== prevOffset) {
-        // 【修正点】nextOffset が prevOffset より大きくなればサマータイム「開始(start)」
+        // nextOffset が prevOffset より大きくなればサマータイム開始
         const type = (nextOffset > prevOffset) ? 'start' : 'end';
 
         const jpFormatter = new Intl.DateTimeFormat('ja-JP', {
@@ -317,6 +351,10 @@
 
   yearSelect.addEventListener('change', render);
   window.addEventListener('DOMContentLoaded', render);
+
+  // 画面が読み込まれたら、現在の西暦を自動で挿入する
+  document.getElementById('current-year').textContent = new Date().getFullYear();
+
 </script>
 </body>
 
