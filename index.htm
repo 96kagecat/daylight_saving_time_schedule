@@ -7,6 +7,7 @@
   無断転載、コピペによる複製、改変、商業利用を固く禁じます。
   =======================================================================
 -->
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -103,7 +104,6 @@
       margin-left: 6px;
       padding: 10px 20px;
       color: var(--text-main);
-      font-family: inherit;
       font-size: 14px;
       font-weight: 600;
       background: rgba(255, 255, 255, 0.55);
@@ -126,7 +126,7 @@
     .card {
       position: relative;
       overflow: hidden;
-      padding: 26px;
+      padding: 15px;
       margin-bottom: 24px;
       background: rgba(255, 255, 255, 0.485);
       border: 1px solid rgba(255, 255, 255, 0.7);
@@ -147,18 +147,6 @@
       border-left-color: var(--accent-fallback);
     }
 
-    .card::before {
-      position: absolute;
-      top: -80px;
-      right: -70px;
-      width: 190px;
-      height: 190px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
-      content: '';
-      pointer-events: none;
-    }
-
     .card-title {
       position: relative;
       z-index: 1;
@@ -166,8 +154,8 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 12px;
-      margin-bottom: 22px;
-      font-size: 15px;
+      margin-bottom: 15px;
+      font-size: 13px;
       font-weight: 600;
     }
 
@@ -189,17 +177,20 @@
     }
 
     .time-value {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       padding: 15px 12px;
       color: #be123c;
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       text-align: center;
-      letter-spacing: 0.05em;
       background: linear-gradient(135deg, rgba(255, 241, 242, 0.9), rgba(254, 226, 226, 0.6));
       border: 1px solid rgba(248, 113, 113, 0.22);
       border-radius: 14px;
       box-shadow: 0 6px 18px rgba(190, 24, 93, 0.08);
+    }
+    .time-text {
+      font-family: 'Geist', ui-monospace, monospace;
+      font-size: 15px;
     }
 
     .schedule-details {
@@ -212,9 +203,9 @@
       align-items: center;
       justify-content: space-between;
       margin: 0 4px 10px;
-      padding: 8px 0;
+
       color: #334155;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.1em;
       cursor: pointer;
@@ -274,7 +265,7 @@
     }
 
     .schedule-row:nth-child(even) {
-      background: rgba(220, 237, 247, 0.24);
+      background: rgba(191, 220, 238, 0.24);
     }
 
     .schedule-row:last-child {
@@ -437,7 +428,8 @@
 
         <div class="time-fullwidth">
           <div class="time-value">
-            切り替わり時間&nbsp;${t.jpTimeStr}
+            <span class="time-label">切り替わり日時&nbsp;&nbsp;</span>
+            <span class="time-text">${t.jpTimeStr}</span>
           </div>
 
           <details
