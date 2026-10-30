@@ -7,7 +7,6 @@
   無断転載、コピペによる複製、改変、商業利用を固く禁じます。
   =======================================================================
 -->
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -235,13 +234,11 @@
         });
 
         const jpTimeStr = jpFormatter.format(nextDate);
-
         transitions.push({
                     type,
           jpTimeStr,
           rawDate: nextDate
         });
-
         prevOffset = nextOffset;
       }
     }
@@ -256,7 +253,7 @@
     const match = tzString.match(/GMT([+-])(\d+):(\d+)/);
     if (!match) return 0;
     const sign = match[1] === '+' ? 1 : -1;
-        const hours = Number.parseInt(match[2], 10);
+    const hours = Number.parseInt(match[2], 10);
     const minutes = Number.parseInt(match[3], 10);
     return sign * (hours * 60 + minutes);
   }
